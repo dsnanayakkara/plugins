@@ -1,49 +1,126 @@
 # pstack for Claude Code
 
-Claude Code port of [pstack](../../pstack/README.md), Lauren Tan's engineering workflow plugin for Cursor. It keeps pstack's process rules (reproduce before fixing, pin behavior before refactoring, label evidence) and spends little on subagents by default.
+pstack makes Claude Code work more carefully. Before it changes code, it reproduces the bug, reads how the code works, and checks its work at the end. It is a Claude Code version of [pstack](../../pstack/README.md), Lauren Tan's plugin for Cursor.
 
-## Install
+You set it up once. After that, it works in every project on your computer.
 
-Nothing is published. The marketplace is this repository.
+## What you need
 
-    claude plugin marketplace add /path/to/this/repo
-    claude plugin install pstack@dsnanayakkara-local
+- Claude Code installed. Run `claude --version` to check.
+- Git.
 
-The plugin then loads in every Claude Code session on this machine.
+## Set it up
 
-## Use
+### 1. Download this repository
 
-- `/pstack:pstack <task>` runs the workflow. It picks a playbook (investigation, bug fix, feature, refactoring) or routes to `/pstack:figure-it-out`.
-- `/pstack:setup-pstack` picks a usage profile for the current repository.
-- `how`, `why`, `architect`, `no-comments`, and `deslop` also run on their own when a task matches.
-- `figure-it-out`, `show-me-your-work`, `tdd`, `unslop`, and `technical-writing` run only when you type them.
+Choose a folder where it can stay. Claude Code reads the plugin from this folder every time, so don't delete or move it later.
 
-## Profiles
+```sh
+git clone -b claude-pstack https://github.com/dsnanayakkara/plugins.git ~/pstack-plugins
+```
 
-`.pstack/config.md` in a repository sets the profile. It is kept out of git.
+### 2. Tell Claude Code where the plugin is
 
-| | lean | balanced (default) | review-heavy |
-|---|---|---|---|
-| Reviewer | none; self-review | `pstack:reviewer` on non-trivial diffs | on every change |
-| how, why, architect | main agent | main agent | `Explore` and `Plan` subagents |
-| Comment pass | main agent | main agent | `pstack:comment-sicko` |
+```sh
+claude plugin marketplace add ~/pstack-plugins
+```
 
-Both agents are read-only (`Read`, `Grep`, `Glob`) and default to Sonnet. Set `reviewer-model:` in the config to change it.
+You should see `Successfully added marketplace: dsnanayakkara-local`.
 
-## Update
+### 3. Install the plugin
 
-A directory marketplace loads the plugin straight from this checkout, so an edit here, or an upstream sync, takes effect in the next session. You don't need a version bump or `claude plugin update`. Run `claude/check-links.sh` after any change that moves or renames files. Bump `version` in `claude/pstack/.claude-plugin/plugin.json` when you cut a release, and it will matter if you ever install from a git marketplace, which uses a versioned cache.
+```sh
+claude plugin install pstack@dsnanayakkara-local
+```
 
-Uninstalling leaves `~/.claude/plugins/cache/dsnanayakkara-local/` behind, so delete it by hand.
+You should see `Successfully installed plugin: pstack@dsnanayakkara-local`.
 
-## Permissions
+### 4. Check that it worked
 
-The skills read their reference files from this checkout, and the links resolve into `pstack/` and `.agents/`, which are outside your project. Claude Code asks before reading outside the working directory, as it does for any plugin's files. To stop the prompts, add a read rule for the checkout to `~/.claude/settings.json`:
+```sh
+claude plugin details pstack@dsnanayakkara-local
+```
 
-    "permissions": { "allow": ["Read(//path/to/this/repo/**)"] }
+You should see `Skills (12)` and `Agents (2)`. If Claude Code is already open, restart it.
 
-For headless runs (`claude -p`), pass `--add-dir /path/to/this/repo` instead.
+### 5. Stop the permission questions (optional)
 
-## Not ported
+pstack reads its guide files from the folder in step 1. That folder is outside your projects, so Claude Code asks for permission each time. To allow it once and for all, open `~/.claude/settings.json` and add the folder to `permissions.allow`. Use the full path, starting with `//`:
 
-`arena`, `interrogate`, `swarm`, and `reflect` rely on multi-model panels, which this port leaves out to save cost. Cursor-only skills are also left out. The 22 principles are references inside `pstack`, not standalone skills.
+```json
+{
+  "permissions": {
+    "allow": ["Read(//Users/you/pstack-plugins/**)"]
+  }
+}
+```
+
+Replace `/Users/you/pstack-plugins` with the real path. Run `echo ~/pstack-plugins` to print it. If the file already has a `permissions` section, add the line to its `allow` list.
+
+## Use it
+
+Open Claude Code in any project and type:
+
+```
+/pstack fix the login test that fails on Mondays
+```
+
+pstack picks the right plan for the task. The first line of its reply names the profile it used and the plan it chose.
+
+Other commands you can type:
+
+| Command | What it does |
+|---|---|
+| `/pstack:setup-pstack` | Choose how many helper agents pstack may use in this project. |
+| `/pstack:figure-it-out` | Plan a large or unusual job step by step. |
+| `/pstack:show-me-your-work` | Keep a log of decisions for a long job. |
+| `/pstack:tdd` | Write a failing test first, then fix the bug. |
+| `/pstack:unslop` | Remove AI-sounding phrases from text. |
+| `/pstack:technical-writing` | Write or review docs, READMEs, and commit messages. |
+
+Claude also uses `how`, `why`, `architect`, `no-comments`, and `deslop` on its own when a task needs them.
+
+## Choose a profile (optional)
+
+A profile controls how many extra agents pstack starts, which controls how much it costs. If you do nothing, every project uses `balanced`.
+
+| Profile | What happens | Cost |
+|---|---|---|
+| `lean` | Claude does everything itself and checks its own work. | Lowest |
+| `balanced` | Claude does the work. One reviewer checks bigger changes. | Low |
+| `review-heavy` | A reviewer checks every change, and helpers explore the code in parallel. | Highest |
+
+To change it, run `/pstack:setup-pstack` in the project. This saves your choice in `.pstack/config.md` and keeps that file out of git.
+
+The reviewer can only read files. It can never change your code. It runs on Sonnet by default. `/pstack:setup-pstack` can switch it to Opus (more careful, costs more) or Haiku (cheapest).
+
+## Get updates
+
+```sh
+cd ~/pstack-plugins
+git pull
+```
+
+Changes take effect the next time you start Claude Code. You don't need to reinstall.
+
+## Remove it
+
+```sh
+claude plugin uninstall pstack@dsnanayakkara-local
+claude plugin marketplace remove dsnanayakkara-local
+rm -rf ~/.claude/plugins/cache/dsnanayakkara-local
+```
+
+Then delete the folder from step 1 if you no longer need it.
+
+## If something goes wrong
+
+- **`/pstack` does nothing, or says it doesn't know the command.** Restart Claude Code and repeat step 4.
+- **"Path is outside allowed working directories".** Do step 5. For scripts that run `claude -p`, add `--add-dir ~/pstack-plugins` instead.
+- **You moved or deleted the folder from step 1.** Run step 2 again with the new path.
+
+## For maintainers
+
+Most skill files are links into `pstack/` (the original Cursor plugin) and `.agents/` (the Codex version). Don't edit those two folders. After you move or rename files, run `claude/check-links.sh` to catch broken links. Bump `version` in `.claude-plugin/plugin.json` when you cut a release.
+
+Not included: `arena`, `interrogate`, `swarm`, and `reflect`. They run several models at once, which costs more. Cursor-only skills are also left out.
