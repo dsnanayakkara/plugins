@@ -32,13 +32,17 @@ Both agents are read-only (`Read`, `Grep`, `Glob`) and default to Sonnet. Set `r
 
 ## Update
 
-Most skill files are links into `pstack/` (upstream) and `.agents/` (the Codex port). An install copies them into the cache, and updates compare only the version. After any change, including an upstream sync:
+A directory marketplace loads the plugin straight from this checkout, so an edit here, or an upstream sync, takes effect in the next session. You don't need a version bump or `claude plugin update`. Run `claude/check-links.sh` after any change that moves or renames files. Bump `version` in `claude/pstack/.claude-plugin/plugin.json` when you cut a release, and it will matter if you ever install from a git marketplace, which uses a versioned cache.
 
-    claude/check-links.sh
-    # bump "version" in claude/pstack/.claude-plugin/plugin.json
-    claude plugin update pstack@dsnanayakkara-local
+Uninstalling leaves `~/.claude/plugins/cache/dsnanayakkara-local/` behind, so delete it by hand.
 
-Then restart Claude Code. Uninstalling leaves `~/.claude/plugins/cache/dsnanayakkara-local/` behind, so delete it by hand.
+## Permissions
+
+The skills read their reference files from this checkout, and the links resolve into `pstack/` and `.agents/`, which are outside your project. Claude Code asks before reading outside the working directory, as it does for any plugin's files. To stop the prompts, add a read rule for the checkout to `~/.claude/settings.json`:
+
+    "permissions": { "allow": ["Read(//path/to/this/repo/**)"] }
+
+For headless runs (`claude -p`), pass `--add-dir /path/to/this/repo` instead.
 
 ## Not ported
 

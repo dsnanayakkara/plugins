@@ -25,6 +25,8 @@ The Principles section below grounds every trigger. In your reply, name each pri
 
 ## Route the task
 
+First, before anything else, read `.pstack/config.md` in the repository root to learn the usage profile (see **Delegation and usage budget**). Open the reply with one line naming it, for example `Profile: lean` or `Profile: balanced (no .pstack/config.md)`, followed by the playbook you chose.
+
 Read the selected playbook before acting. Copy its steps into a checklist first. A step you skip stays in the list with `skip: <reason>`.
 
 - Read-only question or design comparison: `references/playbooks/investigation.md`.
@@ -91,6 +93,7 @@ Read `.pstack/config.md` in the repository root. Its `Profile:` line names `lean
 
 ## Writing the reply
 
+- The first line is the profile and playbook line from **Route the task**, even when a routed skill such as **how** or **why** defines its own output format. That format starts on the next line.
 - Short declarative sentences. Terse is not an excuse to drop content: keep the details, tradeoffs, choices, and open decisions the playbook's reply names.
 - Name who the work is for and what changes for them before implementation detail.
 - Label every claim as measured, inferred, or a guess, in the same sentence. Never hand the user a check you could run yourself.

@@ -28,6 +28,8 @@ Measured on 2026-09-23 with Claude Code 2.1.280 and a throwaway local marketplac
 - `claude plugin validate` does not follow symlinks.
 - `uninstall` and `marketplace remove` leave the cache directory in place.
 
+Correction measured during implementation (Task 8): with a `directory` marketplace, sessions load skills from the source checkout, not from the cache copy. An edit to `claude/pstack/skills/pstack/SKILL.md` took effect in the next headless session with no version bump and no reinstall. Links are resolved live, and all of them resolve inside the repository. Reading a skill's reference files outside the working directory needs permission, as it does for every plugin (a headless read of superpowers' cache was denied too). Headless runs therefore need `--add-dir <repo>`.
+
 Because of these results, the marketplace manifest sits at the repository root. That keeps every link to `pstack/` and `.agents/` inside the marketplace.
 
 ## Layout
@@ -129,7 +131,7 @@ claude plugin marketplace add /path/to/plugins-fork
 claude plugin install pstack@dsnanayakkara-local
 ```
 
-After any change, including an upstream sync, bump `version` in `claude/pstack/.claude-plugin/plugin.json`. Then run `claude plugin update pstack@dsnanayakkara-local` and restart Claude Code. Uninstalling leaves `~/.claude/plugins/cache/dsnanayakkara-local/` behind. Delete it by hand.
+Edits take effect in the next session, because the directory marketplace loads from the checkout. Bump `version` when you cut a release. A git marketplace install would need it. The README also documents the read-permission rule for the checkout. Uninstalling leaves `~/.claude/plugins/cache/dsnanayakkara-local/` behind. Delete it by hand.
 
 ## Out of scope
 
