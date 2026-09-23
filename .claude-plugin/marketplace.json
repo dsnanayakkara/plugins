@@ -1,0 +1,14 @@
+{
+  "name": "dsnanayakkara-local",
+  "owner": { "name": "dsnanayakkara" },
+  "metadata": {
+    "description": "Local Claude Code marketplace for the pstack port. Not published."
+  },
+  "plugins": [
+    {
+      "name": "pstack",
+      "source": "./claude/pstack",
+      "description": "pstack for Claude Code: rigorous engineering playbooks with cost-conscious subagent use."
+    }
+  ]
+}
